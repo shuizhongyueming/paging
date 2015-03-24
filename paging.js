@@ -5,12 +5,13 @@
  * 能在点击页码之后，对应的更新ui
  * 能提供回调函数，在点击页码之后，返回对应的页码供程序调用
  * 能够由外部主动的去变更页码
+ *
+ * require jquery
  */
 
-define(function(require){
+define(function(require) {
     var $ = require('jquery');
-
-    function Paging(){
+    function Paging() {
         var defaultConf = {
 
             // 各种选择器，方便后面的事件注册
@@ -47,7 +48,7 @@ define(function(require){
 
             pageStartFrom: 1, // 页码从多少开始计数
 
-            currPage: 1,  // 当前多少页，初始化的时候为计数开始页
+            currPage: 1, // 当前多少页，初始化的时候为计数开始页
 
             totalPage: 20, // 总共多少页
 
@@ -66,7 +67,7 @@ define(function(require){
      *      $parDom: 包裹分页内容的节点
      * }
      */
-    Paging.prototype.init = function(conf){
+    Paging.prototype.init = function(conf) {
         var me = this;
         if (typeof conf.$parDom === 'undefined') {
             throw new Error('没有$parDom，无法放置生成的分页内容');
@@ -80,26 +81,28 @@ define(function(require){
     /**
      * 注册相关事件
      */
-    Paging.prototype.regEvent = function(){};
+    Paging.prototype.regEvent = function() {
+
+    };
 
     /**
      * 展示指定的页码
      * @param num {Number} 页码
      */
-    Paging.prototype.showPage = function(num){};
+    Paging.prototype.showPage = function(num) {};
 
     /**
      * 重新渲染对应当前页码的UI
      * 用于某些情况下，外部的DOM操作，改变了Paging的样式，又需要恢复的时候
      */
-    Paging.prototype.repaint = function(){};
+    Paging.prototype.repaint = function() {};
 
     /**
      * 矫正当前的页码数据
      * 用于在调用者修改相关页码数据之后的合理性校验和修正
      * 建议在showPage和repaint逻辑执行之前都调用一次
      */
-    Paging.prototype.fixPage = function(){
+    Paging.prototype.fixPage = function() {
         var me = this;
 
         // 矫正maxPage
@@ -116,45 +119,52 @@ define(function(require){
 
         me.isAbleHide = (me.isShowAll === false && me.totalPage > me.maxPageToTriggerHide);
 
+        // 在不触发隐藏的时候，全部显示按钮
         if (!me.isAbleHide) {
+            me.leftNum = me.currPage - me.pageStartFrom;
+            me.rightNum = me.maxPage - me.currPage;
             return;
         }
 
-        if (typeof me.halfOfMaxNumBtnShow === 'undefined' || me.halfOfMaxNumBtnShow > me.maxNumBtnShow){
-            me.halfOfMaxNumBtnShow = Math.floor(me.maxNumBtnShow/2);
+        if (typeof me.halfOfMaxNumBtnShow === 'undefined' || me.halfOfMaxNumBtnShow > me.maxNumBtnShow) {
+            me.halfOfMaxNumBtnShow = Math.floor((me.maxNumBtnShow-1) / 2);
         }
 
         // 判断两边能否接触边界
-        me.isLeftShowEnd = (me.currPage - me.halfOfMaxNumBtnShow) <= me.pageStartFrom;
-        me.isRightShowEnd = (me.currPage + me.halfOfMaxNumBtnShow) >= me.maxPage;
+        me.isLeftShowEnd = me.currPage - me.maxNumBtnShow <= me.pageStartFrom;
+        me.isRightShowEnd = me.currPage + me.maxNumBtnShow >= me.maxPage;
 
         if (me.isLeftShowEnd && me.isRightShowEnd) {
 
-            // 都能接触边界的时候，则左右两边能显示的按钮都显示
+            // 都能接触边界的时候，保证先计算的一边都显示，另外一边再计算
             if (me.calcFirst === 'right') {
                 me.rightNum = me.maxPage - me.currPage;
 
                 // 左侧最多能显示的和左侧到达边界需要的数量进行比较
-                if (me.maxNumBtnShow - me.rightNum - 1 > me.currPage - me.pageStartFrom) {
+                me.leftNum = Math.min(me.maxNumBtnShow - me.rightNum - 1, me.totalPage - me.rightNum - 1);
 
-                    // 能显示的比需要的多，则左侧只需要显示需要的数量
-                    me.leftNum = me.currPage - me.pageStartFrom;
-                } else {
-                    // 能显示的小于等于需要的，则左侧只能显示能显示的数量
-                    me.leftNum = me.maxNumBtnShow - me.rightNum - 1;
-                }
+                // if (me.maxNumBtnShow - me.rightNum - 1 > me.currPage - me.pageStartFrom) {
+
+                //     // 能显示的比需要的多，则左侧只需要显示需要的数量
+                //     me.leftNum = me.currPage - me.pageStartFrom;
+                // } else {
+                //     // 能显示的小于等于需要的，则左侧只能显示能显示的数量
+                //     me.leftNum = me.maxNumBtnShow - me.rightNum - 1;
+                // }
             } else {
                 me.leftNum = me.currPage - me.pageStartFrom;
 
                 // 右侧最多能显示的和右侧到达边界需要的数量进行比较
-                if (me.maxNumBtnShow - me.leftNum - 1 > me.maxPage - me.currPage) {
+                me.rightNum = Math.min(me.maxNumBtnShow - me.leftNum - 1, me.totalPage - me.leftNum - 1);
 
-                    // 能显示的比需要的多，则右侧只需要显示需要的数量
-                    me.rightNum = me.maxPage - me.currPage;
-                } else {
-                    // 能显示的小于等于需要的，则右侧只能显示能显示的数量
-                    me.rightNum = me.maxNumBtnShow - me.leftNum - 1;
-                }
+                // if (me.maxNumBtnShow - me.leftNum - 1 > me.maxPage - me.currPage) {
+
+                //     // 能显示的比需要的多，则右侧只需要显示需要的数量
+                //     me.rightNum = me.maxPage - me.currPage;
+                // } else {
+                //     // 能显示的小于等于需要的，则右侧只能显示能显示的数量
+                //     me.rightNum = me.maxNumBtnShow - me.leftNum - 1;
+                // }
             }
 
 
@@ -162,12 +172,17 @@ define(function(require){
 
             // 左边可以触到边界的时候，左边全显示，右边显示剩下的（除开当前的）
             me.leftNum = me.currPage - me.pageStartFrom;
-            me.rightNum = me.maxNumBtnShow - me.leftNum - 1;
+
+            // 必须保证左右的加上中间的不能超过totalPage和maxNumBtnShow各自的总数
+            me.rightNum = Math.min(me.maxNumBtnShow - me.leftNum - 1, me.totalPage - me.leftNum - 1);
+            // me.rightNum = me.maxNumBtnShow - me.leftNum - 1;
         } else if (!me.isLeftShowEnd && me.isRightShowEnd) {
 
             // 和上面相反
             me.rightNum = me.maxPage - me.currPage;
-            me.leftNum = me.maxNumBtnShow - me.rightNum - 1;
+
+            me.leftNum = Math.min(me.maxNumBtnShow - me.rightNum - 1, me.totalPage - me.rightNum - 1);
+            // me.leftNum = me.maxNumBtnShow - me.rightNum - 1;
         } else {
 
             // 都不能接触边界的时候
@@ -180,11 +195,11 @@ define(function(require){
 
                 // 和上面相反
                 me.leftNum = me.halfOfMaxNumBtnShow;
-                me.rightNum = me.maxNumBtnShow - me.halfOfMaxNumBtnShow -1;
+                me.rightNum = me.maxNumBtnShow - me.halfOfMaxNumBtnShow - 1;
             }
         }
 
-        console.log('currPage: '+me.currPage+';totalPage: '+me.totalPage+';maxNumBtnShow '+me.maxNumBtnShow+';leftNum: '+me.leftNum+';rightNum: '+me.rightNum);
+        console.log('currPage: ' + me.currPage + ';totalPage: ' + me.totalPage + ';maxNumBtnShow ' + me.maxNumBtnShow + ';leftNum: ' + me.leftNum + ';rightNum: ' + me.rightNum);
 
     };
 
@@ -192,34 +207,43 @@ define(function(require){
      * 生成最左边的终点按钮（一般的说法是：首页）
      * @param isActive {boolean} 当前页码是否就是激活状态，也就是首页
      */
-    Paging.prototype.makeLeftEndBtn = function(isActive){};
+    Paging.prototype.makeLeftEndBtn = function(isActive) {};
 
     /**
      * 生成最右边的终点按钮（一般的说法是：尾页）
      * @param isActive {boolean} 当前页码是否就是激活状态，也就是尾页
      */
-    Paging.prototype.makeRightEndBtn = function(isActive){};
+    Paging.prototype.makeRightEndBtn = function(isActive) {};
 
     /**
      * 生成上一页的按钮
      * @param isActive {boolean} 当前页码是否就是激活状态，在首页，没有办法继续上一页了
      */
-    Paging.prototype.makePrevBtn = function(isActive){};
+    Paging.prototype.makePrevBtn = function(isActive) {};
 
     /**
      * 生成下一页的按钮
      * @param isActive {boolean} 当前页码是否就是激活状态，在尾页，没有办法继续下一页了
      */
-    Paging.prototype.makeNextBtn = function(isActive){};
+    Paging.prototype.makeNextBtn = function(isActive) {};
 
     /**
      * 生成数字页的按钮
      * @param num {number} 对应要生成的页码
      * @param isActive {boolean} 当前页码是否就是激活状态，也就是说当前展示的就是当前页码
      */
-    Paging.prototype.makeNumBtn = function(num,isActive){};
+    Paging.prototype.makeNumBtn = function(num, isActive) {};
 
 
+    // if ( typeof define === "function" && define.amd ) {
+    //     define( "paging", [], function() {
+    //         return Paging;
+    //     });
+    // } else {
+    //     window.Paging = Paging;
+    // }
+    //
 
     return Paging;
+
 });
