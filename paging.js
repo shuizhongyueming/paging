@@ -149,7 +149,7 @@ define(function(require) {
         me.currPage = num;
         me.fixPage();
         me.makeHtml();
-        console.log(me.$parDom);
+        // console.log(me.$parDom);
         me.$parDom.html(me.sort());
     };
 
@@ -287,11 +287,15 @@ define(function(require) {
         }
 
         /**
-         * 在leftNumBtn不为空的时候，根据leftNum的值，从pageStartFrom开始遍历生成
+         * 在leftNumBtn不为空的时候，根据leftNum的值
+         * leftNumBtn的计算，不能从pageStartFrome开始
+         * 要从currPage-leftNum开始，保证小于currPage
          */
         if (tmp.leftNumBtn !== '') {
-            tmp.leftNumBtn = $(me.makeNumBtn(me.pageStartFrom, false)).attr('data-'+dataName, numDataValue).attr('data-'+me.dataValueName, me.pageStartFrom);
-            for (i = me.pageStartFrom+1, len = me.leftNum; i <= len; i++) {
+            tmp.leftNumBtn = $(me.makeNumBtn(me.currPage-me.leftNum, false)).attr('data-'+dataName, numDataValue).attr('data-'+me.dataValueName, me.currPage-me.leftNum);
+
+
+            for (i = me.currPage-me.leftNum+1, len = me.currPage; i < len; i++) {
                 tmp.leftNumBtn = tmp.leftNumBtn.add($(me.makeNumBtn(i, false)).attr('data-'+dataName, numDataValue).attr('data-'+me.dataValueName, i));
             }
         }
@@ -308,7 +312,7 @@ define(function(require) {
 
         tmp.currBtn = $(me.makeNumBtn(me.currPage, true)).attr('data-'+dataName, currDataValue).attr('data-'+me.dataValueName, me.currPage);
 
-        console.log(tmp);
+        // console.log(tmp);
     };
 
     /**

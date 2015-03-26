@@ -400,10 +400,53 @@ describe('Paging', function(){
             me.fixPage();
             me.makeHtml();
             me.$parDom.html(me.sort());
-            me.$parDom.find('[data-'+me.dataValueName+']').add(me.$parDom.find(me.selectorCurr)).each(function(i,n){
+            me.$parDom.find('[data-'+me.dataValueName+']').each(function(i,n){
                 var curr = $(n);
                 expect(curr.data(me.dataValueName) === parseInt(curr.text(), 10)).toBe(true);
             });
+        });
+
+        it('以currBtn为起点,向左右延伸的numBtn的值都是连续的', function(){
+            var $parDom = $('<div></div>'),
+                numBtns,
+                currPage,
+                prevValue,
+                i,
+                j;
+
+            me.init({
+                $parDom: $parDom
+            });
+
+            me.fixPage();
+            me.makeHtml();
+            me.$parDom.html(me.sort());
+
+
+            for (j = me.pageStartFrom; j <= me.maxPage; j++) {
+                me.showPage(j);
+                numBtns = me.$parDom.find('[data-'+me.dataValueName+']');
+
+                console.log('############ 在第'+j+'页############');
+
+                prevValue = j;
+
+                // 向右延伸
+                for (i = numBtns.index(numBtns.filter('.'+me.classBtnActive))+1; i < numBtns.length; i++ ) {
+                    console.log('右',i, parseInt(numBtns.eq(i).text(), 10)-1, prevValue);
+                    expect(parseInt(numBtns.eq(i).text(), 10)-1 === prevValue).toBe(true);
+                    prevValue = parseInt(numBtns.eq(i).text(), 10);
+                }
+
+                // 向左延伸
+                prevValue = j;
+                for (i = numBtns.index(numBtns.filter('.'+me.classBtnActive))-1; i >= 0; i-- ) {
+                    console.log('左',i, parseInt(numBtns.eq(i).text(), 10)+1, prevValue);
+                    expect(parseInt(numBtns.eq(i).text(), 10)+1 === prevValue).toBe(true);
+                    prevValue = parseInt(numBtns.eq(i).text(), 10);
+                }
+
+            }
         });
 
     });
