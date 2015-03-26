@@ -14,6 +14,10 @@ define(function(require) {
     function Paging() {
         var defaultConf = {
 
+            dataRoleName: 'role',
+            dataValueName: 'num',
+
+
             // 各种选择器，方便后面的事件注册
             selectorLeftEndBtn: '[data-role="pagingLeftEndBtn"]',
             selectorRightEndBtn: '[data-role="pagingRightEndBtn"]',
@@ -24,6 +28,9 @@ define(function(require) {
 
 
             isShowAll: false, // 是否显示全部的numBtn
+
+            // 按钮是否高亮的class，这个主要是用来在后面点击事件中，判断有的时候，不响应
+            classBtnActive: 'active',
 
             /**
              * 在隐藏多余按钮的时候，numBtn能显示多少个
@@ -36,6 +43,9 @@ define(function(require) {
              */
             maxNumBtnShow: 10,
             calcFirst: 'left',
+
+            // 默认的排序
+            sortConf: 'leftEndBtn|prevBtn|leftNumBtn|currBtn|rightNumBtn|nextBtn|rightEndBtn',
 
 
             /**
@@ -76,26 +86,230 @@ define(function(require) {
         $.extend(me, conf);
 
         me.regEvent();
+        me.repaint();
     };
 
     /**
      * 注册相关事件
      */
     Paging.prototype.regEvent = function() {
+        var me = this;
 
+        me.$parDom.on(me.eventType, me.selectorLeftEndBtn, function(){
+            var curr = $(this);
+            if (!curr.hasClass(me.classBtnActive)) {
+                me.goLeftEnd();
+                me.$parDom.trigger('paging','leftEndBtn');
+            }
+        });
+
+        me.$parDom.on(me.eventType, me.selectorRightEndBtn, function(){
+            var curr = $(this);
+            if (!curr.hasClass(me.classBtnActive)) {
+                me.goRightEnd();
+                me.$parDom.trigger('paging','rightEndBtn');
+            }
+        });
+
+        me.$parDom.on(me.eventType, me.selectorPrevBtn, function(){
+            var curr = $(this);
+            if (!curr.hasClass(me.classBtnActive)) {
+                me.goPrev();
+                me.$parDom.trigger('paging','prevBtn');
+            }
+        });
+
+        me.$parDom.on(me.eventType, me.selectorNextBtn, function(){
+            var curr = $(this);
+            if (!curr.hasClass(me.classBtnActive)) {
+                me.goNext();
+                me.$parDom.trigger('paging','nextBtn');
+            }
+        });
+
+        me.$parDom.on(me.eventType, me.selectorNumBtn, function(){
+            var curr = $(this), page;
+            if (!curr.hasClass(me.classBtnActive)) {
+                page = parseInt(curr.data(me.dataValueName), 10);
+                me.showPage(page);
+                me.$parDom.trigger('paging','numBtn', page);
+            }
+        });
     };
+
+
 
     /**
      * 展示指定的页码
      * @param num {Number} 页码
      */
-    Paging.prototype.showPage = function(num) {};
+    Paging.prototype.showPage = function(num) {
+        var me = this;
+
+        me.currPage = num;
+        me.fixPage();
+        me.makeHtml();
+        console.log(me.$parDom);
+        me.$parDom.html(me.sort());
+    };
 
     /**
      * 重新渲染对应当前页码的UI
      * 用于某些情况下，外部的DOM操作，改变了Paging的样式，又需要恢复的时候
      */
-    Paging.prototype.repaint = function() {};
+    Paging.prototype.repaint = function() {
+        var me = this;
+
+        me.showPage(me.currPage);
+    };
+
+    /**
+     * 跳转到最初始页
+     */
+    Paging.prototype.goLeftEnd = function() {
+        var me = this;
+
+        me.fixPage();
+        me.showPage(me.pageStartFrom);
+    };
+
+    /**
+     * 跳转到最大页
+     */
+    Paging.prototype.goRightEnd = function() {
+        var me = this;
+
+        me.fixPage();
+        me.showPage(me.maxPage);
+    };
+
+    /**
+     * 跳转到上一页
+     */
+    Paging.prototype.goPrev = function() {
+        var me = this;
+
+        me.fixPage();
+        me.showPage(me.currPage - 1);
+    };
+
+    /**
+     * 跳转到下一页
+     */
+    Paging.prototype.goNext = function() {
+        var me = this;
+
+        me.fixPage();
+        me.showPage(me.currPage + 1);
+    };
+
+
+    /**
+     * 根据sortConf来对应的把makeHtml生成的内容，进行删减和排序
+     * @return {jquery} 生成的内容
+     */
+    Paging.prototype.sort = function(){
+        var me = this,
+            arr,
+            frag = $('<div></div>');
+
+        arr = me.sortConf.split('|');
+
+        $.each(arr, function(i, n){
+            if (typeof me.html[n] === 'undefined') {
+                throw new Error('错误的sortConf内容: ' + n);
+            }
+            if (me.html[n] === '') {
+                console.log('跳过空值');
+                return;
+            }
+            frag.append(me.html[n]);
+        });
+
+        // console.log(frag);
+
+        return frag.children();
+    };
+
+    /**
+     * 生成个个角色对应的HTML
+     */
+    Paging.prototype.makeHtml = function() {
+        var me = this,
+            i = 0,
+            len = 0,
+            dataName = me.dataRoleName,
+            leftEndDataValue = me.selectorLeftEndBtn.match(/"(\w+)"/)[1],
+            rightEndDataValue = me.selectorRightEndBtn.match(/"(\w+)"/)[1],
+            prevDataValue = me.selectorPrevBtn.match(/"(\w+)"/)[1],
+            nextDataValue = me.selectorNextBtn.match(/"(\w+)"/)[1],
+            numDataValue = me.selectorNumBtn.match(/"(\w+)"/)[1],
+            currDataValue = me.selectorCurr.match(/"(\w+)"/)[1],
+            tmp;
+
+
+        me.data = {};
+        me.data.leftEndDataValue = leftEndDataValue;
+        me.data.rightEndDataValue = rightEndDataValue;
+        me.data.prevDataValue = prevDataValue;
+        me.data.nextDataValue = nextDataValue;
+        me.data.numDataValue = numDataValue;
+        me.data.currDataValue = currDataValue;
+
+        me.html = tmp = {};
+
+        // 此处在设定data-的数据集的时候，用的attr而不是data，是方便后面的selector的检索
+
+        /**
+         * 在初始页的时候设定leftEndBtn和prevBtn为active，其他情况下为非active
+         * 设定leftNumBtn为空
+         */
+        if (me.currPage === me.pageStartFrom) {
+            tmp.leftEndBtn = $(me.makeLeftEndBtn(true)).attr('data-'+dataName, leftEndDataValue);
+            tmp.prevBtn = $(me.makePrevBtn(true)).attr('data-'+dataName, prevDataValue);
+            tmp.leftNumBtn = '';
+        } else {
+            tmp.leftEndBtn = $(me.makeLeftEndBtn(false)).attr('data-'+dataName, leftEndDataValue);
+            tmp.prevBtn = $(me.makePrevBtn(false)).attr('data-'+dataName, prevDataValue);
+        }
+
+        /**
+         * 在最大页的时候设定rightEndBtn和nextBtn为active，其他情况下为非active
+         * 设定rightNumBtn为空
+         */
+        if (me.currPage === me.maxPage) {
+            tmp.rightEndBtn = $(me.makeRightEndBtn(true)).attr('data-'+dataName, rightEndDataValue);
+            tmp.nextBtn = $(me.makeNextBtn(true)).attr('data-'+dataName, nextDataValue);
+            tmp.rightNumBtn = '';
+        } else {
+            tmp.rightEndBtn = $(me.makeRightEndBtn(false)).attr('data-'+dataName, rightEndDataValue);
+            tmp.nextBtn = $(me.makeNextBtn(false)).attr('data-'+dataName, nextDataValue);
+        }
+
+        /**
+         * 在leftNumBtn不为空的时候，根据leftNum的值，从pageStartFrom开始遍历生成
+         */
+        if (tmp.leftNumBtn !== '') {
+            tmp.leftNumBtn = $(me.makeNumBtn(me.pageStartFrom, false)).attr('data-'+dataName, numDataValue).attr('data-'+me.dataValueName, me.pageStartFrom);
+            for (i = me.pageStartFrom+1, len = me.leftNum; i <= len; i++) {
+                tmp.leftNumBtn = tmp.leftNumBtn.add($(me.makeNumBtn(i, false)).attr('data-'+dataName, numDataValue).attr('data-'+me.dataValueName, i));
+            }
+        }
+
+        /**
+         * 在rightNumBtn不为空的时候，根据rightNum的值，从currPage+1开始遍历生成
+         */
+        if (tmp.rightNumBtn !== '') {
+            tmp.rightNumBtn = $(me.makeNumBtn(me.currPage+1, false)).attr('data-'+dataName, numDataValue).attr('data-'+me.dataValueName, me.currPage+1);
+            for (i = 2, len = me.rightNum; i <= len; i++) {
+                tmp.rightNumBtn = tmp.rightNumBtn.add($(me.makeNumBtn(me.currPage+i, false)).attr('data-'+dataName, numDataValue).attr('data-'+me.dataValueName, me.currPage+i));
+            }
+        }
+
+        tmp.currBtn = $(me.makeNumBtn(me.currPage, true)).attr('data-'+dataName, currDataValue).attr('data-'+me.dataValueName, me.currPage);
+
+        console.log(tmp);
+    };
 
     /**
      * 矫正当前的页码数据
@@ -127,12 +341,12 @@ define(function(require) {
         }
 
         if (typeof me.halfOfMaxNumBtnShow === 'undefined' || me.halfOfMaxNumBtnShow > me.maxNumBtnShow) {
-            me.halfOfMaxNumBtnShow = Math.floor((me.maxNumBtnShow-1) / 2);
+            me.halfOfMaxNumBtnShow = Math.ceil(me.maxNumBtnShow / 2);
         }
 
         // 判断两边能否接触边界
-        me.isLeftShowEnd = me.currPage - me.maxNumBtnShow <= me.pageStartFrom;
-        me.isRightShowEnd = me.currPage + me.maxNumBtnShow >= me.maxPage;
+        me.isLeftShowEnd = me.currPage - me.halfOfMaxNumBtnShow <= me.pageStartFrom;
+        me.isRightShowEnd = me.currPage + me.halfOfMaxNumBtnShow >= me.maxPage;
 
         if (me.isLeftShowEnd && me.isRightShowEnd) {
 
@@ -143,28 +357,12 @@ define(function(require) {
                 // 左侧最多能显示的和左侧到达边界需要的数量进行比较
                 me.leftNum = Math.min(me.maxNumBtnShow - me.rightNum - 1, me.totalPage - me.rightNum - 1);
 
-                // if (me.maxNumBtnShow - me.rightNum - 1 > me.currPage - me.pageStartFrom) {
-
-                //     // 能显示的比需要的多，则左侧只需要显示需要的数量
-                //     me.leftNum = me.currPage - me.pageStartFrom;
-                // } else {
-                //     // 能显示的小于等于需要的，则左侧只能显示能显示的数量
-                //     me.leftNum = me.maxNumBtnShow - me.rightNum - 1;
-                // }
             } else {
                 me.leftNum = me.currPage - me.pageStartFrom;
 
                 // 右侧最多能显示的和右侧到达边界需要的数量进行比较
                 me.rightNum = Math.min(me.maxNumBtnShow - me.leftNum - 1, me.totalPage - me.leftNum - 1);
 
-                // if (me.maxNumBtnShow - me.leftNum - 1 > me.maxPage - me.currPage) {
-
-                //     // 能显示的比需要的多，则右侧只需要显示需要的数量
-                //     me.rightNum = me.maxPage - me.currPage;
-                // } else {
-                //     // 能显示的小于等于需要的，则右侧只能显示能显示的数量
-                //     me.rightNum = me.maxNumBtnShow - me.leftNum - 1;
-                // }
             }
 
 
@@ -199,7 +397,7 @@ define(function(require) {
             }
         }
 
-        console.log('currPage: ' + me.currPage + ';totalPage: ' + me.totalPage + ';maxNumBtnShow ' + me.maxNumBtnShow + ';leftNum: ' + me.leftNum + ';rightNum: ' + me.rightNum);
+        // console.log('currPage: ' + me.currPage + ';totalPage: ' + me.totalPage + ';maxNumBtnShow ' + me.maxNumBtnShow + ';leftNum: ' + me.leftNum + ';rightNum: ' + me.rightNum);
 
     };
 
@@ -207,42 +405,63 @@ define(function(require) {
      * 生成最左边的终点按钮（一般的说法是：首页）
      * @param isActive {boolean} 当前页码是否就是激活状态，也就是首页
      */
-    Paging.prototype.makeLeftEndBtn = function(isActive) {};
+    Paging.prototype.makeLeftEndBtn = function(isActive) {
+        if (isActive) {
+            return '<span class="active">首页</span>';
+        } else {
+            return '<span>首页</span>';
+        }
+    };
 
     /**
      * 生成最右边的终点按钮（一般的说法是：尾页）
      * @param isActive {boolean} 当前页码是否就是激活状态，也就是尾页
      */
-    Paging.prototype.makeRightEndBtn = function(isActive) {};
+    Paging.prototype.makeRightEndBtn = function(isActive) {
+        if (isActive) {
+            return '<span class="active">尾页</span>';
+        } else {
+            return '<span>尾页</span>';
+        }
+    };
 
     /**
      * 生成上一页的按钮
      * @param isActive {boolean} 当前页码是否就是激活状态，在首页，没有办法继续上一页了
      */
-    Paging.prototype.makePrevBtn = function(isActive) {};
+    Paging.prototype.makePrevBtn = function(isActive) {
+        if (isActive) {
+            return '<span class="active">上一页</span>';
+        } else {
+            return '<span>上一页</span>';
+        }
+    };
 
     /**
      * 生成下一页的按钮
      * @param isActive {boolean} 当前页码是否就是激活状态，在尾页，没有办法继续下一页了
      */
-    Paging.prototype.makeNextBtn = function(isActive) {};
+    Paging.prototype.makeNextBtn = function(isActive) {
+        if (isActive) {
+            return '<span class="active">下一页</span>';
+        } else {
+            return '<span>下一页</span>';
+        }
+    };
 
     /**
      * 生成数字页的按钮
      * @param num {number} 对应要生成的页码
      * @param isActive {boolean} 当前页码是否就是激活状态，也就是说当前展示的就是当前页码
      */
-    Paging.prototype.makeNumBtn = function(num, isActive) {};
+    Paging.prototype.makeNumBtn = function(num, isActive) {
+        if (isActive) {
+            return '<span class="active">'+num+'</span>';
+        } else {
+            return '<span>'+num+'</span>';
+        }
+    };
 
-
-    // if ( typeof define === "function" && define.amd ) {
-    //     define( "paging", [], function() {
-    //         return Paging;
-    //     });
-    // } else {
-    //     window.Paging = Paging;
-    // }
-    //
 
     return Paging;
 
