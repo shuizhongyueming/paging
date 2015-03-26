@@ -4,7 +4,7 @@
 require.config(
     {
         paths: {
-            'jquery': ['http://www.7k7kjs.cn/js/lib/jquery/1.9.1/jquery.min'],
+            'jquery': ['../lib/jquery.min'],
             'paging': '../paging',
             'jasmine': 'lib/jasmine-2.2.0/jasmine',
             'jasmine-html': 'lib/jasmine-2.2.0/jasmine-html',
