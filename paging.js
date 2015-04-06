@@ -220,7 +220,7 @@ define(function(require) {
                 throw new Error('错误的sortConf内容: ' + n);
             }
             if (me.html[n] === '') {
-                console.log('跳过空值');
+               // console.log('跳过空值');
                 return;
             }
             frag.append(me.html[n]);
@@ -411,9 +411,9 @@ define(function(require) {
      */
     Paging.prototype.makeLeftEndBtn = function(isActive) {
         if (isActive) {
-            return '<span class="active">首页</span>';
+            return '<span onselectstart="return false;" unselectable="on" class="active">首页</span>';
         } else {
-            return '<span>首页</span>';
+            return '<span onselectstart="return false;" unselectable="on">首页</span>';
         }
     };
 
@@ -423,9 +423,9 @@ define(function(require) {
      */
     Paging.prototype.makeRightEndBtn = function(isActive) {
         if (isActive) {
-            return '<span class="active">尾页</span>';
+            return '<span onselectstart="return false;" unselectable="on" class="active">尾页</span>';
         } else {
-            return '<span>尾页</span>';
+            return '<span onselectstart="return false;" unselectable="on">尾页</span>';
         }
     };
 
@@ -435,9 +435,9 @@ define(function(require) {
      */
     Paging.prototype.makePrevBtn = function(isActive) {
         if (isActive) {
-            return '<span class="active">上一页</span>';
+            return '<span onselectstart="return false;" unselectable="on" class="active">上一页</span>';
         } else {
-            return '<span>上一页</span>';
+            return '<span onselectstart="return false;" unselectable="on">上一页</span>';
         }
     };
 
@@ -447,9 +447,9 @@ define(function(require) {
      */
     Paging.prototype.makeNextBtn = function(isActive) {
         if (isActive) {
-            return '<span class="active">下一页</span>';
+            return '<span onselectstart="return false;" unselectable="on" class="active">下一页</span>';
         } else {
-            return '<span>下一页</span>';
+            return '<span onselectstart="return false;" unselectable="on">下一页</span>';
         }
     };
 
@@ -460,9 +460,9 @@ define(function(require) {
      */
     Paging.prototype.makeNumBtn = function(num, isActive) {
         if (isActive) {
-            return '<span class="active">'+num+'</span>';
+            return '<span onselectstart="return false;" unselectable="on" class="active">'+num+'</span>';
         } else {
-            return '<span>'+num+'</span>';
+            return '<span onselectstart="return false;" unselectable="on">'+num+'</span>';
         }
     };
 
