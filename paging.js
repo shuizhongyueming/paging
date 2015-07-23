@@ -90,6 +90,26 @@ define(function(require) {
     };
 
     /**
+     * 判断是否第一页
+     * @return {Boolean} true 是 false 不是
+     */
+    Paging.prototype.isFirstPage = function(){
+        var me = this;
+
+        return me.currPage === me.pageStartFrom;
+    };
+
+    /**
+     * 判断是否最后一页
+     * @return {Boolean} true 是 false 不是
+     */
+    Paging.prototype.isLastPage = function(){
+        var me = this;
+
+        return me.currPage === me.maxPage;
+    }
+
+    /**
      * 注册相关事件
      */
     Paging.prototype.regEvent = function() {
@@ -97,7 +117,7 @@ define(function(require) {
 
         me.$parDom.on(me.eventType, me.selectorLeftEndBtn, function(){
             var curr = $(this);
-            if (!curr.hasClass(me.classBtnActive)) {
+            if (!me.isFirstPage()) {
                 me.goLeftEnd();
                 me.$parDom.trigger('paging','leftEndBtn');
             }
@@ -105,7 +125,7 @@ define(function(require) {
 
         me.$parDom.on(me.eventType, me.selectorRightEndBtn, function(){
             var curr = $(this);
-            if (!curr.hasClass(me.classBtnActive)) {
+            if (!me.isLastPage()) {
                 me.goRightEnd();
                 me.$parDom.trigger('paging','rightEndBtn');
             }
@@ -113,7 +133,7 @@ define(function(require) {
 
         me.$parDom.on(me.eventType, me.selectorPrevBtn, function(){
             var curr = $(this);
-            if (!curr.hasClass(me.classBtnActive)) {
+            if (!me.isFirstPage()) {
                 me.goPrev();
                 me.$parDom.trigger('paging','prevBtn');
             }
@@ -121,7 +141,7 @@ define(function(require) {
 
         me.$parDom.on(me.eventType, me.selectorNextBtn, function(){
             var curr = $(this);
-            if (!curr.hasClass(me.classBtnActive)) {
+            if (!me.isLastPage()) {
                 me.goNext();
                 me.$parDom.trigger('paging','nextBtn');
             }
